@@ -13,14 +13,19 @@ public class History : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("history", "Get the moderation history of a user")]
     [RequireMod]
-    public async Task HistoryAsync(SocketGuildUser user, ModHistory.ActionType? type = null, SocketGuildUser? mod = null, int page = 0)
+    public async Task HistoryAsync(SocketGuildUser? user = null, ModHistory.ActionType? type = null, SocketGuildUser? mod = null, int page = 0)
     {
-        var query = DatabaseManager.Connection?.Table<ModHistory>().Where(h => h.DiscordId == user.Id);
+        var query = DatabaseManager.Connection?.Table<ModHistory>();
 
         if (query == null)
         {
             await RespondAsync("No history found.");
             return;
+        }
+
+        if (user != null)
+        {
+            query = query.Where(h => h.DiscordId == user.Id);
         }
 
         if (type != null)
@@ -58,7 +63,7 @@ public class History : InteractionModuleBase<SocketInteractionContext>
         foreach (var entry in truncated)
         {
             var mod_ = Context.Guild.GetUser(entry.ModId);
-            embed.AddField(entry.Action.ToString(), $"By {mod_?.Username ?? "Unknown"} on {entry.Timestamp:yyyy-MM-dd HH:mm:ss}{(entry.Content != null ? $"\n{entry.Content}" : "")}");
+            embed.AddField(entry.Action.ToString(), $"By {mod_?.Username ?? "Unknown"} on {entry.Timestamp:yyyy-MM-dd HH:mm:ss}{(entry.Expiry != null ? $"\n{entry.Expiry - entry.Timestamp}" : "")}{(entry.Content != null ? $"\n{entry.Content}" : "")}");
         }
 
         await RespondAsync(embed: embed.Build());

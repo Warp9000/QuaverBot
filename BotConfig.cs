@@ -14,6 +14,7 @@ public struct BotConfig
     public ulong ModlogChannelId;
     public string MacroPrefix;
     public ulong MutedRole;
+    public ulong StreamBanRole;
     public ulong[] ModRoles;
     public CleanConfig Clean;
     public LogConfig Log;

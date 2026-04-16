@@ -23,6 +23,8 @@ public class ModHistory
     public enum ActionType
     {
         Mute,
-        Unmute
+        Unmute,
+        StreamBan,
+        StreamUnban
     }
 }

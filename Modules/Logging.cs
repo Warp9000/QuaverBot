@@ -217,4 +217,52 @@ public static class Logging
 
         await logsChannel.SendMessageAsync(embed: embed.Build());
     }
+
+    public static async Task LogStreamBan(ulong user, ulong mod, string? reason, DiscordSocketClient client)
+    {
+        if (QuaverBot.Config.ModlogChannelId == 0) return;
+
+        if (client.GetChannel(QuaverBot.Config.ModlogChannelId) is not ITextChannel logsChannel)
+        {
+            Logger.Error("Logs channel not found.");
+            return;
+        }
+
+        var embed = new EmbedBuilder
+        {
+            Title = "Stream Ban",
+            Color = Color.Orange,
+            Timestamp = DateTimeOffset.Now
+        };
+
+        embed.AddField("User", $"<@{user}>", true);
+        embed.AddField("Moderator", $"<@{mod}>", true);
+        embed.AddField("Reason", reason ?? "No reason provided.", true);
+
+        await logsChannel.SendMessageAsync(embed: embed.Build());
+    }
+
+    public static async Task LogStreamUnban(ulong user, ulong mod, string? reason, DiscordSocketClient client)
+    {
+        if (QuaverBot.Config.ModlogChannelId == 0) return;
+
+        if (client.GetChannel(QuaverBot.Config.ModlogChannelId) is not ITextChannel logsChannel)
+        {
+            Logger.Error("Logs channel not found.");
+            return;
+        }
+
+        var embed = new EmbedBuilder
+        {
+            Title = "Stream Unban",
+            Color = Color.Orange,
+            Timestamp = DateTimeOffset.Now
+        };
+
+        embed.AddField("User", $"<@{user}>", true);
+        embed.AddField("Moderator", $"<@{mod}>", true);
+        embed.AddField("Reason", reason ?? "No reason provided.", true);
+
+        await logsChannel.SendMessageAsync(embed: embed.Build());
+    }
 }

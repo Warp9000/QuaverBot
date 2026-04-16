@@ -86,7 +86,8 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
             DiscordId = user.Id,
             ModId = Context.User.Id,
             Action = ModHistory.ActionType.Mute,
-            Content = reason
+            Content = reason,
+            Expiry = endTime
         };
 
         DatabaseManager.Connection?.Insert(history);
