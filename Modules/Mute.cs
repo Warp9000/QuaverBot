@@ -51,8 +51,6 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        await user.AddRoleAsync(QuaverBot.Config.MutedRole, new RequestOptions { AuditLogReason = reason });
-
         DateTimeOffset endTime;
         TimeSpan? durationTime = null;
         if (permKeywords.Contains(duration.ToLower()))
@@ -71,7 +69,7 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
             durationTime = time;
         }
 
-        // DateTimeOffset endTime = duration != null ? DateTimeOffset.UtcNow + duration.Value : DateTimeOffset.MaxValue;
+        await user.AddRoleAsync(QuaverBot.Config.MutedRole, new RequestOptions { AuditLogReason = $"{(durationTime != null ? $"{durationTime}" : "perm")} for {reason}" });
 
         var muteData = new DatabaseMute
         {
