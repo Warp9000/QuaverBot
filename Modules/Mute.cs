@@ -35,7 +35,7 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
 
     [SlashCommand("mute", "Mute a user")]
     [RequireMod]
-    public async Task MuteAsync(SocketGuildUser user, string duration, string reason)
+    public async Task MuteAsync(SocketGuildUser user, string duration, string reason, bool dm_user = true, bool dm_reason = true)
     {
         if (QuaverBot.Config.MutedRole == 0)
         {
@@ -96,6 +96,32 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
         if (reason != null) response += $": `{reason}`";
 
         await RespondAsync(response);
+
+        if (dm_user)
+        {
+            var embed = new EmbedBuilder
+            {
+                Title = "Muted",
+                Color = Color.Orange,
+                Timestamp = DateTimeOffset.Now,
+            };
+
+            embed.AddField("Duration", durationTime != null ? FormatTime(durationTime.Value) : "Permanent");
+            if (dm_reason && !string.IsNullOrEmpty(reason))
+            {
+                embed.AddField("Reason", reason);
+            }
+
+            try
+            {
+                await user.SendMessageAsync(embed: embed.Build());
+            }
+            catch
+            {
+                var resp = await GetOriginalResponseAsync();
+                await resp.ReplyAsync("Couldnt DM user.");
+            }
+        }
     }
 
     [SlashCommand("unmute", "Unmute a user")]
