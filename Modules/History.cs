@@ -57,6 +57,11 @@ public class History : InteractionModuleBase<SocketInteractionContext>
             }
         };
 
+        if (user != null)
+        {
+            embed.WithAuthor(user);
+        }
+
         // var truncated = history.Take(EmbedBuilder.MaxFieldCount).ToList();
         var truncated = history.Skip(page * EmbedBuilder.MaxFieldCount).Take(EmbedBuilder.MaxFieldCount).ToList();
 
