@@ -24,7 +24,7 @@ public static class Logging
         CleanupTimer.Elapsed += (sender, args) => CleanupCache();
         CleanupTimer.Start();
 
-        lastAuditId = (await client.GetGuild(QuaverBot.Config.GuildId).GetAuditLogsAsync(1).FlattenAsync()).First().Id;
+        lastAuditId = (await client.GetGuild(QuaverBot.Config.GuildId).GetAuditLogsAsync(1).FlattenAsync()).FirstOrDefault()?.Id ?? 0;
     }
 
     private static HttpClient HttpClient { get; } = new();
