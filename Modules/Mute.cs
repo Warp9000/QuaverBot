@@ -90,12 +90,35 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
 
         DatabaseManager.Connection?.Insert(history);
         await Logging.LogMute(user.Id, Context.User.Id, reason, durationTime, Context.Client);
+        await SendMutedMessage(user, durationTime, reason);
 
         string response = $"Muted {user.Username}";
         if (durationTime != null) response += $" for {FormatTime(durationTime.Value)}";
         if (reason != null) response += $": `{reason}`";
 
         await RespondAsync(response);
+    }
+
+    public async Task SendMutedMessage(SocketGuildUser user, TimeSpan? duration, string reason)
+    {
+        var embed = new EmbedBuilder
+        {
+            Title = "You've been muted!",
+            Color = Color.Orange,
+            Timestamp = DateTimeOffset.Now
+        };
+
+        embed.AddField("Duration", duration != null ? FormatTime(duration.Value) : "Permanent");
+        embed.AddField("Reason", reason ?? "No reason provided.", true);
+
+        try
+        {
+            await user.SendMessageAsync(embed: embed.Build());
+        }
+        catch
+        {
+            Logger.Warning($"Failed to dm user ({user.Id} @{user.Username}) about mute");
+        }
     }
 
     [SlashCommand("unmute", "Unmute a user")]
