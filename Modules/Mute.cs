@@ -14,25 +14,6 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
 {
     private static readonly string[] permKeywords = { "permanent", "perm", "p", "forever", "inf", "infinite", "infinity", "-1" };
 
-    // https://github.com/discord-net/Discord.Net/blob/51f59bf1852fd8a13d1142170782bdb73eea9f5e/src/Discord.Net.Interactions/TypeConverters/SlashCommands/TimeSpanConverter.cs#L18
-    private static readonly string[] Formats = {
-        "%d'd'%h'h'%m'm'%s's'", //4d3h2m1s
-        "%d'd'%h'h'%m'm'",      //4d3h2m
-        "%d'd'%h'h'%s's'",      //4d3h  1s
-        "%d'd'%h'h'",           //4d3h
-        "%d'd'%m'm'%s's'",      //4d  2m1s
-        "%d'd'%m'm'",           //4d  2m
-        "%d'd'%s's'",           //4d    1s
-        "%d'd'",                //4d
-        "%h'h'%m'm'%s's'",      //  3h2m1s
-        "%h'h'%m'm'",           //  3h2m
-        "%h'h'%s's'",           //  3h  1s
-        "%h'h'",                //  3h
-        "%m'm'%s's'",           //    2m1s
-        "%m'm'",                //    2m
-        "%s's'",                //      1s
-    };
-
     [SlashCommand("mute", "Mute a user")]
     [RequireMod]
     public async Task MuteAsync(SocketGuildUser user, string duration, string reason, bool dm_user = true, bool dm_reason = true)
@@ -51,6 +32,7 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
+        DateTimeOffset startTime = DateTimeOffset.UtcNow;
         DateTimeOffset endTime;
         TimeSpan? durationTime = null;
         if (permKeywords.Contains(duration.ToLower()))
@@ -59,14 +41,15 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
         }
         else
         {
-            if (!TimeSpan.TryParseExact(duration, Formats, CultureInfo.InvariantCulture, out TimeSpan time))
+            TimeSpan? parsed = ParseTime(duration);
+            if (parsed == null)
             {
                 await RespondAsync("Invalid duration.");
                 return;
             }
 
-            endTime = DateTimeOffset.UtcNow + time;
-            durationTime = time;
+            endTime = startTime + parsed.Value;
+            durationTime = parsed.Value;
         }
 
         await user.AddRoleAsync(QuaverBot.Config.MutedRole, new RequestOptions { AuditLogReason = $"{(durationTime != null ? $"{durationTime}" : "perm")} for {reason}" });
@@ -81,6 +64,7 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
 
         var history = new ModHistory
         {
+            Timestamp = startTime,
             DiscordId = user.Id,
             ModId = Context.User.Id,
             Action = ModHistory.ActionType.Mute,
@@ -200,6 +184,47 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
                 await Logging.LogUnmute(user.Id, client.CurrentUser.Id, "Automatic unmute", client);
             }
         }
+    }
+
+    public static TimeSpan? ParseTime(string str)
+    {
+        TimeSpan t = new();
+        int i = 0;
+        foreach (var c in str)
+        {
+            if (c == ' ')
+            {
+                continue;
+            }
+
+            if (c >= '0' && c <= '9')
+            {
+                i = (i * 10) + (c - '0');
+                continue;
+            }
+
+            TimeSpan t2;
+            switch (c)
+            {
+                case 's': t2 = TimeSpan.FromSeconds(i); break;
+                case 'm': t2 = TimeSpan.FromMinutes(i); break;
+                case 'h': t2 = TimeSpan.FromHours(i); break;
+                case 'd': t2 = TimeSpan.FromDays(i); break;
+                case 'M': t2 = TimeSpan.FromDays(i * 30); break;
+                case 'Y': t2 = TimeSpan.FromDays(i * 365); break;
+                default:
+                    return null;
+            }
+            t = t.Add(t2);
+            i = 0;
+        }
+
+        if (t == TimeSpan.Zero)
+        {
+            return null;
+        }
+
+        return t;
     }
 
     public static string FormatTime(TimeSpan time)
