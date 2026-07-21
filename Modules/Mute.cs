@@ -210,6 +210,7 @@ public class Mute : InteractionModuleBase<SocketInteractionContext>
                 case 'm': t2 = TimeSpan.FromMinutes(i); break;
                 case 'h': t2 = TimeSpan.FromHours(i); break;
                 case 'd': t2 = TimeSpan.FromDays(i); break;
+                case 'w': t2 = TimeSpan.FromDays(i * 7); break;
                 case 'M': t2 = TimeSpan.FromDays(i * 30); break;
                 case 'Y': t2 = TimeSpan.FromDays(i * 365); break;
                 default:
