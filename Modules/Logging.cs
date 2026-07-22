@@ -110,6 +110,7 @@ public static class Logging
         embed.WithAuthor(message.Value.Author);
         embed.WithDescription(message.Value.Content);
         embed.AddField("Channel", $"<#{channel.Id}>", false);
+        embed.WithFooter($"u{message.Value.Author.Id} m{message.Id}");
 
         var audit = await client.GetGuild(QuaverBot.Config.GuildId).GetAuditLogsAsync(10, null, null, null, ActionType.MessageDeleted, lastAuditId).FlattenAsync();
         audit = audit.Where(x =>
@@ -165,6 +166,7 @@ public static class Logging
             "\n```"
         );
         embed.AddField("Channel", $"<#{channel.Id}>", false);
+        embed.WithFooter($"u{m2.Author.Id} m{m1.Id}");
 
         await logsChannel.SendMessageAsync(embed: embed.Build());
     }
