@@ -11,10 +11,27 @@ namespace QuaverBot.Modules;
 
 public class History : InteractionModuleBase<SocketInteractionContext>
 {
+    private readonly DiscordSocketClient client;
+    public History(DiscordSocketClient c)
+    {
+        client = c;
+    }
+
     [SlashCommand("history", "Get the moderation history of a user")]
     [RequireMod]
-    public async Task HistoryAsync(SocketGuildUser? user = null, ModHistory.ActionType? type = null, SocketGuildUser? mod = null, int page = 0)
+    public async Task HistoryAsync(string? user = null, ModHistory.ActionType? type = null, SocketGuildUser? mod = null, int page = 0)
     {
+        ulong? user_id = null;
+        if (user != null)
+        {
+            user = user.Trim(new char[] { '<', '>', '@', ' ' });
+            if (!ulong.TryParse(user, out ulong _user_id))
+            {
+                await RespondAsync("invalid user.");
+            }
+            user_id = _user_id;
+        }
+
         var query = DatabaseManager.Connection?.Table<ModHistory>();
 
         if (query == null)
@@ -23,9 +40,9 @@ public class History : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (user != null)
+        if (user_id != null)
         {
-            query = query.Where(h => h.DiscordId == user.Id);
+            query = query.Where(h => h.DiscordId == user_id);
         }
 
         if (type != null)
@@ -46,6 +63,8 @@ public class History : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
+        await DeferAsync();
+
         var embed = new EmbedBuilder
         {
             Title = "History",
@@ -57,9 +76,10 @@ public class History : InteractionModuleBase<SocketInteractionContext>
             }
         };
 
-        if (user != null)
+        if (user_id != null)
         {
-            embed.WithAuthor(user);
+            IUser u = await client.GetUserAsync(user_id.Value);
+            embed.WithAuthor(u);
         }
 
         // var truncated = history.Take(EmbedBuilder.MaxFieldCount).ToList();
@@ -71,6 +91,6 @@ public class History : InteractionModuleBase<SocketInteractionContext>
             embed.AddField(entry.Action.ToString(), $"By {mod_?.Username ?? "Unknown"} on {entry.Timestamp:yyyy-MM-dd HH:mm:ss}{(entry.Expiry != null ? $"\n{entry.Expiry - entry.Timestamp}" : "")}{(entry.Content != null ? $"\n{entry.Content}" : "")}");
         }
 
-        await RespondAsync(embed: embed.Build());
+        await FollowupAsync(embed: embed.Build());
     }
 }
