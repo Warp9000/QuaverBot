@@ -11,7 +11,7 @@ public class Clear : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("clear", "Clear messages from a channel")]
     [RequireMod]
-    public async Task ClearAsync(int amount, IUser? user = null)
+    public async Task ClearAsync(int amount, IUser? user = null, ITextChannel? channel = null)
     {
         if (amount < 1)
         {
@@ -19,10 +19,15 @@ public class Clear : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (Context.Channel is not ITextChannel textChannel)
+        if (channel == null)
         {
-            await RespondAsync("Channel is not a text channel.");
-            return;
+            if (Context.Channel is not ITextChannel)
+            {
+                await RespondAsync("Channel is not a text channel.");
+                return;
+            }
+
+            channel = (ITextChannel)Context.Channel;
         }
 
         await DeferAsync();
@@ -32,8 +37,8 @@ public class Clear : InteractionModuleBase<SocketInteractionContext>
         while (messages.Count < amount && ((!messages.Any()) || messages.LastOrDefault()?.Timestamp > DateTimeOffset.Now.AddDays(-14)))
         {
             var fetched = oldestMessage == null ?
-                await textChannel.GetMessagesAsync(100).FlattenAsync() :
-                await textChannel.GetMessagesAsync(oldestMessage, Direction.Before, 100).FlattenAsync();
+                await channel.GetMessagesAsync(100).FlattenAsync() :
+                await channel.GetMessagesAsync(oldestMessage, Direction.Before, 100).FlattenAsync();
 
             if (!fetched.Any())
                 break;
@@ -55,7 +60,7 @@ public class Clear : InteractionModuleBase<SocketInteractionContext>
             .Take(amount)
             .ToList();
 
-        await textChannel.DeleteMessagesAsync(messages);
+        await channel.DeleteMessagesAsync(messages);
 
         await FollowupAsync($"Deleted {messages.Count} messages.");
     }
