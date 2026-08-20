@@ -25,6 +25,7 @@ public class ModHistory
         Mute,
         Unmute,
         StreamBan,
-        StreamUnban
+        StreamUnban,
+        Scma,
     }
 }

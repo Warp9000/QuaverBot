@@ -11,6 +11,8 @@ namespace QuaverBot.Modules;
 
 public class History : InteractionModuleBase<SocketInteractionContext>
 {
+    private const int PAGE_COUNT = 10;
+
     private readonly DiscordSocketClient client;
     public History(DiscordSocketClient c)
     {
@@ -39,6 +41,8 @@ public class History : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("No history found.");
             return;
         }
+
+        query = query.OrderByDescending(h => h.Timestamp);
 
         if (user_id != null)
         {
@@ -72,7 +76,7 @@ public class History : InteractionModuleBase<SocketInteractionContext>
             Color = new Color(0xdf9911),
             Footer = new EmbedFooterBuilder
             {
-                Text = $"Page {page + 1}/{(history.Count + EmbedBuilder.MaxFieldCount - 1) / EmbedBuilder.MaxFieldCount}"
+                Text = $"Page {page + 1}/{(history.Count + PAGE_COUNT - 1) / PAGE_COUNT}"
             }
         };
 
@@ -82,8 +86,7 @@ public class History : InteractionModuleBase<SocketInteractionContext>
             embed.WithAuthor(u);
         }
 
-        // var truncated = history.Take(EmbedBuilder.MaxFieldCount).ToList();
-        var truncated = history.Skip(page * EmbedBuilder.MaxFieldCount).Take(EmbedBuilder.MaxFieldCount).ToList();
+        var truncated = history.Skip(page * PAGE_COUNT).Take(PAGE_COUNT).ToList();
 
         foreach (var entry in truncated)
         {
